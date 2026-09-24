@@ -1,0 +1,7 @@
+/node_modules
+_verify/
+_playtest/
+_live/
+_jam/
+_surfaces/
+.DS_Store
