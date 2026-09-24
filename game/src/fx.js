@@ -154,7 +154,7 @@ export class FX {
     this.rainLife = new Float32Array(this.rainN);
     this.rainI = 0;
     const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(this.rainPos, 3).setUsage(THREE.DynamicDrawUsage));
-    this.rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0xc8ecff, transparent: true, opacity: 0.85, depthWrite: false }));
+    this.rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.85, depthWrite: false }));
     this.rainX = new Float32Array(this.rainN * 3);
     this.rain.frustumCulled = false; scene.add(this.rain);
     // arrows
@@ -203,7 +203,7 @@ export class FX {
     }
   }
   rainOver(x, y, z, rate = 1) {
-    for (let k = 0; k < rate * 2; k++) {
+    for (let k = 0; k < rate * 4; k++) {
       const i = this.rainI; this.rainI = (this.rainI + 1) % this.rainN;
       const px = x + (Math.random() - 0.5) * 3.4, pz = z + (Math.random() - 0.5) * 3.4, py = y + 5 + Math.random() * 2.5;
       this.rainPos.set([px, py, pz, px + 0.03, py - 0.8, pz], i * 6);
@@ -211,7 +211,7 @@ export class FX {
       this.rainX.set([px, y + 0.25, pz], i * 3);
     }
     // a small dark raincloud gathering over the shrine
-    if (Math.random() < 0.5) this.clouds.emit(x + (Math.random() - 0.5) * 3.6, y + 7.2 + Math.random() * 0.8, z + (Math.random() - 0.5) * 3.6, (Math.random() - 0.5) * 0.4, 0.05, (Math.random() - 0.5) * 0.4, 2.6, 3.2 + Math.random() * 1.6, 0.34, 0.38, 0.44, 0.75);
+    if (Math.random() < 0.8) this.clouds.emit(x + (Math.random() - 0.5) * 3.6, y + 7.2 + Math.random() * 0.8, z + (Math.random() - 0.5) * 3.6, (Math.random() - 0.5) * 0.4, 0.05, (Math.random() - 0.5) * 0.4, 2.6, 3.6 + Math.random() * 1.8, 0.24, 0.28, 0.34, 0.85);
   }
   spiritAura(x, y, z) { if (Math.random() < 0.5) this.glow.emit(x + (Math.random() - 0.5) * 3, y + Math.random() * 4.5, z + (Math.random() - 0.5) * 3, 0, 0.4 + Math.random() * 0.4, 0, 2, 0.35, 0.62, 0.94, 0.78, 0.8); }
 

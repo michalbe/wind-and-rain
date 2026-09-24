@@ -18,7 +18,7 @@ export class UI {
   constructor(game, camera, canvas, portraits) {
     this.g = game; this.cam = camera; this.canvas = canvas; this.portraits = portraits;
     this.target = new THREE.Vector2(LAYOUT.playerGrod[0] + 4, LAYOUT.playerGrod[1] + 4);
-    this.dist = 50; this.distGoal = 50; this.pitch = 0.96;
+    this.dist = 50; this.distGoal = 50; this.pitch = 1.06;
     this.keys = new Set(); this.mouse = { x: 0, y: 0, in: false, down: false, bx: 0, by: 0, button: 0 };
     this.mode = null;               // null | {type:'place', bt} | {type:'amove'}
     this.groups = {};

@@ -24,7 +24,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPrefere
 renderer.setSize(innerWidth, innerHeight, false);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 2, 500);
-const rig = createRig(THREE, renderer, scene, { hour: 16.6, azimuth: 225, tier: 'auto', fogStart: 90, bloomStrength: 0.18, exposure: 0.74, fill: 1.7, bounceFlat: 5 });
+const rig = createRig(THREE, renderer, scene, { hour: 12.5, elevation: 60, azimuth: 215, tier: 'auto', fogStart: 90, bloomStrength: 0.16, exposure: 0.58, fill: 1.8, bounceFlat: 5 });
 const phone = rig.tier.name === 'phone';
 setSurfaceDefaults({ size: phone ? 256 : 512 });
 
