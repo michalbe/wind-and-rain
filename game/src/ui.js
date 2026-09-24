@@ -13,6 +13,7 @@ import { ICON } from './icons.js';
 const $ = (id) => document.getElementById(id);
 const TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 const FINE = window.matchMedia('(pointer:fine)').matches;
+const NARROW = () => innerWidth <= 640;
 
 export class UI {
   constructor(game, camera, canvas, portraits) {
@@ -254,12 +255,12 @@ export class UI {
   refreshPanel(force = false) {
     const g = this.g, sel = g.selection.filter((e) => !e.dead);
     const panel = $('panel');
-    if (!sel.length) { panel.classList.add('empty'); $('cmds').innerHTML = ''; $('info').innerHTML = '<div class="hint">' + (TOUCH ? 'Tap a unit to select it. Drag to look around.' : 'Select units with a click or a box. Right-click to command.') + '</div>'; $('portrait').style.backgroundImage = ''; this.cmdKeys = {}; this.lastCmdSig = ''; return; }
+    if (!sel.length) { $('queuebar').classList.remove('on'); panel.classList.add('empty'); $('cmds').innerHTML = ''; $('info').innerHTML = '<div class="hint">' + (TOUCH ? 'Tap a unit to select it. Drag to look around.' : 'Select units with a click or a box. Right-click to command.') + '</div>'; $('portrait').style.backgroundImage = ''; this.cmdKeys = {}; this.lastCmdSig = ''; this.syncPanelH(); return; }
     panel.classList.remove('empty');
     const e = sel[0];
     const key = e.kind === 'unit' ? e.ut : e.bt;
     $('portrait').style.backgroundImage = this.portraits[key] ? `url(${this.portraits[key]})` : '';
-    let html = '';
+    let html = '', queueHtml = '';
     if (sel.length === 1) {
       const d = e.def;
       const owner = e.team === TEAM.PLAYER ? '' : e.team === TEAM.RIVAL ? ' <span class="foe">Rival Clan</span>' : ' <span class="neutral">Neutral</span>';
@@ -273,15 +274,21 @@ export class UI {
         else if (e.bt === 'shrine') html += `<div class="st">Zhercas: ${e.workers.length} / 3 · +${e.workers.filter((w) => w.anim.mode === 'rite').length} Rain/s</div>`;
         else if (e.bt === 'grod') html += `<div class="st">Dancers: ${(e.dancers || []).filter((d) => !d.dead && d.anim.mode === 'dance').length} · +${(e.dancers || []).filter((d) => !d.dead && d.anim.mode === 'dance').length} Wind/s</div>`;
         else if (e.bt === 'khata') html += `<div class="st">+8 Supply</div>`;
-        if (e.queue.length) {
+        if (e.queue.length && e.team === TEAM.PLAYER) {
           const q = e.queue[0]; const f = q.t / UNITS[q.ut].time;
-          html += `<div class="queue">${e.queue.map((q, i) => `<span style="background-image:url(${this.portraits[q.ut]})">${i === 0 ? `<i style="height:${(f * 100) | 0}%"></i>` : ''}</span>`).join('')}</div>`;
+          queueHtml = e.queue.map((q, i) => `<span data-q="${i}" title="Cancel ${UNITS[q.ut].name}" style="background-image:url(${this.portraits[q.ut]})">${i === 0 ? `<i style="height:${(f * 100) | 0}%"></i><b>${Math.ceil(UNITS[q.ut].time - q.t)}s</b>` : ''}</span>`).join('');
+          if (!NARROW()) html += `<div class="queue">${queueHtml}</div>`;
         }
       }
     } else {
       html += '<div class="multi">' + sel.slice(0, 18).map((u) => `<span data-id="${u.id}" style="background-image:url(${this.portraits[u.ut]})"><i style="width:${(u.hp / u.maxHp * 100) | 0}%"></i></span>`).join('') + '</div>';
     }
     $('info').innerHTML = html;
+    this.syncPanelH();
+    const qb = $('queuebar');
+    qb.innerHTML = NARROW() ? queueHtml : '';
+    qb.classList.toggle('on', NARROW() && !!queueHtml);
+    for (const sp of document.querySelectorAll('#queuebar span, #info .queue span')) sp.onpointerup = (ev) => { ev.stopPropagation(); if (e.kind === 'building') { g.cancelTrain(e, +sp.dataset.q); sfx('click'); this.refreshPanel(true); } };
     for (const sp of $('info').querySelectorAll('.multi span')) sp.onclick = () => { const u = g.units.find((u) => u.id === +sp.dataset.id); if (u) this.select([u]); };
     // command buttons: rebuild only when they change
     const cmds = e.team === TEAM.PLAYER ? this.commandsFor() : [];
@@ -304,6 +311,13 @@ export class UI {
       box.appendChild(el);
       if (c.key && c.act) this.cmdKeys[c.key.length === 1 ? 'Key' + c.key : c.key] = c.act;
     }
+    this.syncPanelH();
+  }
+
+  syncPanelH() {
+    if (!NARROW()) { document.documentElement.style.removeProperty('--panelH'); return; }
+    const h = $('panel').offsetHeight;
+    if (h && h !== this.lastPanelH) { this.lastPanelH = h; document.documentElement.style.setProperty('--panelH', h + 'px'); }
   }
 
   /* ------------------------------------------------------------ HUD */

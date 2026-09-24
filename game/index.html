@@ -80,7 +80,11 @@
   #info .multi span, #info .queue span { position:relative; width:34px; height:34px; background:#221a12 center/cover; border:1px solid var(--edge); cursor:pointer; }
   #info .multi span i { position:absolute; left:0; bottom:0; height:3px; background:#6cff5a; }
   #info .queue { display:flex; gap:3px; margin-top:5px; }
-  #info .queue span i { position:absolute; left:0; bottom:0; width:100%; background:rgba(160,220,255,.45); }
+  #info .queue span i, #queuebar span i { position:absolute; left:0; bottom:0; width:100%; background:rgba(160,220,255,.45); }
+  #info .queue span b, #queuebar span b { position:absolute; right:1px; bottom:0; font-size:10px; font-weight:400; text-shadow:0 1px 2px #000; }
+  #queuebar { position:absolute; right:max(8px,env(safe-area-inset-right)); flex-direction:row-reverse; bottom:calc(var(--panelH) + 12px); display:none; gap:4px; padding:4px; pointer-events:auto; }
+  #queuebar.on { display:flex; }
+  #queuebar span { position:relative; width:40px; height:40px; background:#221a12 center/cover; border:1px solid var(--edge); cursor:pointer; }
   #cmds { display:grid; grid-template-columns:repeat(4, 58px); grid-auto-rows:56px; gap:4px; align-content:start; }
   .cmd { position:relative; padding:0; border:1px solid var(--edge); background:linear-gradient(#3a2a1a,#23180d); color:var(--ink); font-family:inherit; cursor:pointer; border-radius:3px; overflow:hidden; }
   .cmd:hover { border-color:var(--gold); } .cmd:active { transform:translateY(1px); }
@@ -106,12 +110,13 @@
 
   @media (max-width: 640px) {
     :root { --panelH: 186px; }
-    #panel { flex-wrap:wrap; height:var(--panelH); gap:6px; padding:6px; }
+    #panel { flex-wrap:wrap; height:auto; min-height:52px; gap:6px; padding:6px; }
     #portrait { width:64px; min-width:64px; height:64px; }
-    #info { height:64px; flex:1; }
-    #info .nm { font-size:16px; }
+    #info { height:auto; min-height:64px; flex:1; overflow:visible; }
+    #info .nm { font-size:16px; line-height:1.15; } #info .tt { font-size:11px; }
+    #info .hp { margin:4px 0 3px; } #info .st { line-height:1.35; }
     #cmds { width:100%; grid-template-columns:repeat(6, 1fr); grid-auto-rows:52px; }
-    #panel.empty { height:52px; } #panel.empty #portrait { display:none; } #panel.empty #info { height:auto; }
+    #panel.empty #portrait { display:none; } #panel.empty #info { min-height:0; }
     #top { font-size:13px; padding:4px 6px; left:8px; transform:none; } #top .res { padding:0 4px; } #top .res small { display:none; }
     #clock { display:none; }
     #objs { font-size:12px; max-width:190px; top:max(50px,calc(env(safe-area-inset-top) + 46px)); }
@@ -148,6 +153,7 @@
   <div id="mmwrap" class="frame"><canvas id="minimap" width="160" height="160"></canvas></div>
   <div id="toast"></div>
   <div id="placehint"></div>
+  <div id="queuebar" class="frame"></div>
   <div id="panel" class="frame empty">
     <div id="portrait"></div>
     <div id="info"></div>

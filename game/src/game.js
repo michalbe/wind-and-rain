@@ -204,7 +204,7 @@ export class Game {
     b.queue.push({ ut, t: 0 });
     return { ok: true };
   }
-  cancelTrain(b) { const q = b.queue.pop(); if (q) this.pay(b.team, UNITS[q.ut], -1); }
+  cancelTrain(b, i = b.queue.length - 1) { const q = b.queue.splice(i, 1)[0]; if (q) this.pay(b.team, UNITS[q.ut], -1); }
 
   /** walk outward from (x, z) along angle a, starting at radius r, to the first walkable spot */
   freeAlong(x, z, a, r) {
