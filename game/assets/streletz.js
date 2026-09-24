@@ -33,7 +33,7 @@ export default function (THREE) {
   for (const [hip, knee] of [[lHip, lKnee], [rHip, rKnee]]) {
     add(hip, lathe([[0.085, 0.02], [0.09, -0.15], [0.07, -0.43]], 7), hair);
     add(knee, lathe([[0.07, 0.02], [0.072, -0.1], [0.062, -0.3]], 7), leather);
-    for (const y of [-0.08, -0.22]) add(knee, lathe([[0.074, y + 0.02], [0.072, y - 0.02]], 7), hair);
+    for (const y of [-0.16]) add(knee, lathe([[0.074, y + 0.02], [0.072, y - 0.02]], 7), hair);
     add(knee, ext(boot, 0.14), leather, [0, -0.5, 0], [0, -Math.PI / 2, 0]);
   }
 
@@ -45,28 +45,30 @@ export default function (THREE) {
 
   // ---- quiver: lathe tube with a flared mouth, arrows fanning out
   const quiver = J(spine, -0.02, 0.2, -0.23);
-  quiver.rotation.set(-0.15, 0, 0.5);
+  quiver.rotation.set(-0.15, 0, 0.5); quiver.scale.setScalar(1.2);
   add(quiver, lathe([[0, -0.3], [0.07, -0.3], [0.08, 0.1], [0.1, 0.28], [0.095, 0.3]], 8), leather);
-  add(quiver, lathe([[0.101, 0.2], [0.104, 0.28]], 8), fur, [0, 0, 0], [0, 0, 0], [1.02, 1, 1.02]);
+  add(quiver, lathe([[0.085, 0.04], [0.108, 0.1], [0.118, 0.3], [0.1, 0.32]], 8), team);                // team-colour cap
+  add(quiver, lathe([[0.084, -0.2], [0.086, -0.14]], 8), team, [0, 0, 0], [0, 0, 0], [1.03, 1, 1.03]);
   for (let i = 0; i < 5; i++) {
     const a = i * 1.26, x = Math.sin(a) * 0.045, z = Math.cos(a) * 0.045;
     const ar = J(quiver, x, 0.2, z); ar.rotation.set(z * 2, 0, -x * 2);
     add(ar, new THREE.CylinderGeometry(0.009, 0.009, 0.22, 4), wood, [0, 0.1, 0]);
     const f = new THREE.Shape(); f.moveTo(0, 0); f.lineTo(0.03, 0.02); f.lineTo(0.03, 0.12); f.lineTo(0, 0.1); f.closePath();
-    add(ar, ext(f, 0.006), linen, [0, 0.13, 0], [0, a, 0]);
+    add(ar, ext(f, 0.006), team, [0, 0.13, 0], [0, a, 0]);
     add(ar, ext(f, 0.006), linen, [0, 0.13, 0], [0, a + Math.PI, 0]);
   }
 
   // ---- head: lathe fur kolpak with a team-cloth crown
-  add(head, lathe([[0.06, 0], [0.065, 0.1]], 6), skin);
-  add(head, new THREE.SphereGeometry(0.17, 9, 7), skin, [0, 0.19, 0.01], [0, 0, 0], [1, 1.05, 1]);
-  add(head, new THREE.ConeGeometry(0.035, 0.09, 4), skin, [0, 0.18, 0.19], [Math.PI / 2 + 0.3, 0, 0]);
-  add(head, new THREE.SphereGeometry(0.018, 4, 3), hair, [0.058, 0.215, 0.158]);
-  add(head, new THREE.SphereGeometry(0.018, 4, 3), hair, [-0.058, 0.215, 0.158]);
+  const hg = J(head, 0, 0, 0); hg.scale.setScalar(1.25);
+  add(hg, lathe([[0.06, 0], [0.065, 0.1]], 6), skin);
+  add(hg, new THREE.SphereGeometry(0.17, 9, 7), skin, [0, 0.19, 0.01], [0, 0, 0], [1, 1.05, 1]);
+  add(hg, new THREE.ConeGeometry(0.035, 0.09, 4), skin, [0, 0.18, 0.19], [Math.PI / 2 + 0.3, 0, 0]);
+  add(hg, new THREE.SphereGeometry(0.018, 4, 3), hair, [0.058, 0.215, 0.158]);
+  add(hg, new THREE.SphereGeometry(0.018, 4, 3), hair, [-0.058, 0.215, 0.158]);
   const must = new THREE.Shape(); must.moveTo(0, 0.02); must.quadraticCurveTo(0.08, 0.03, 0.1, -0.1); must.lineTo(0.08, -0.1); must.quadraticCurveTo(0.06, -0.02, 0, -0.01); must.quadraticCurveTo(-0.06, -0.02, -0.08, -0.1); must.lineTo(-0.1, -0.1); must.quadraticCurveTo(-0.08, 0.03, 0, 0.02);
-  add(head, ext(must, 0.04), hair, [0, 0.14, 0.16]);
-  add(head, new THREE.SphereGeometry(0.172, 8, 6), hair, [0, 0.19, -0.035]);
-  const cap = J(head, 0, 0.25, -0.01); cap.rotation.x = -0.12;
+  add(hg, ext(must, 0.04), hair, [0, 0.14, 0.16]);
+  add(hg, new THREE.SphereGeometry(0.172, 8, 6), hair, [0, 0.19, -0.035]);
+  const cap = J(hg, 0, 0.25, -0.01); cap.rotation.x = -0.12;
   add(cap, lathe([[0.19, -0.02], [0.205, 0.04], [0.2, 0.11], [0.16, 0.13]], 9), fur);
   add(cap, lathe([[0.165, 0.1], [0.16, 0.15], [0.11, 0.19], [0, 0.2]], 9), team);
   add(cap, new THREE.SphereGeometry(0.035, 5, 4), fur, [0, 0.21, 0]);
@@ -75,7 +77,7 @@ export default function (THREE) {
   for (const [sh, el] of [[lShoulder, lElbow], [rShoulder, rElbow]]) {
     add(sh, lathe([[0, 0.08], [0.08, 0.05], [0.085, -0.05], [0.07, -0.29]], 7), linen);
     add(el, lathe([[0.065, 0.02], [0.07, -0.08], [0.06, -0.21]], 7), leather);
-    add(el, new THREE.SphereGeometry(0.07, 7, 5), skin, [0, -0.28, 0.01], [0, 0, 0], [0.85, 1.1, 1]);
+    add(el, new THREE.SphereGeometry(0.07, 7, 5), skin, [0, -0.29, 0.01], [0, 0, 0], [0.85 * 1.25, 1.1 * 1.25, 1.25]);
   }
   lShoulder.rotation.set(-0.45, 0, 0.2);
   lElbow.rotation.set(-0.7, 0, 0);
@@ -86,11 +88,13 @@ export default function (THREE) {
   const bowJ = J(lElbow, 0, -0.28, 0.01);
   g.updateMatrixWorld(true);
   const q = new THREE.Quaternion(); lElbow.getWorldQuaternion(q);
-  bowJ.quaternion.copy(q.invert()).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.15, 0, -0.1)));
-  const bow = new THREE.CatmullRomCurve3([V(0, -0.84, 0.03), V(0, -0.74, -0.05), V(0, -0.45, 0.05), V(0, 0, 0.12), V(0, 0.45, 0.05), V(0, 0.74, -0.05), V(0, 0.84, 0.03)]);
-  add(bowJ, new THREE.TubeGeometry(bow, 14, 0.032, 5, false), wood);
-  add(bowJ, new THREE.CylinderGeometry(0.042, 0.042, 0.16, 6), leather, [0, 0, 0.115]);
-  add(bowJ, new THREE.CylinderGeometry(0.006, 0.006, 1.6, 4), linen, [0, 0, -0.03]);
+  bowJ.quaternion.copy(q.invert()).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.2, 0, -0.5)));
+  const bowP = J(bowJ, 0, 0, 0); bowP.rotation.y = 0.8;   // turn the belly of the bow out toward the camera
+  const BL = 1.2, BD = 1.6;   // bow length and recurve depth scale
+  const bow = new THREE.CatmullRomCurve3([[-0.84, 0.03], [-0.74, -0.05], [-0.45, 0.05], [0, 0.12], [0.45, 0.05], [0.74, -0.05], [0.84, 0.03]].map(([y, z]) => V(0, y * BL, z * BD)));
+  add(bowP, new THREE.TubeGeometry(bow, 14, 0.06, 5, false), wood);
+  add(bowP, new THREE.CylinderGeometry(0.075, 0.075, 0.2, 6), leather, [0, 0, 0.12 * BD]);
+  add(bowP, new THREE.CylinderGeometry(0.012, 0.012, 1.66 * BL, 3), linen, [0, 0, 0.03 * BD - 0.02]);
 
   // ---- place
   const bb = new THREE.Box3(), v = new THREE.Vector3(), m4 = new THREE.Matrix4(), im = new THREE.Matrix4();

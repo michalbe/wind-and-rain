@@ -12,8 +12,8 @@
 | TEAM CLOTH | `0xc0282d` | `fabric` | **the one team colour**: sashes, shield faces, banners, hoods, cloth strips. Use this exact hex for team-coloured parts and for nothing else. The game swaps it per clan. |
 | timber light | `0xa27a4f` | `timber` | logs, planks, handles, bows |
 | timber dark | `0x5e4029` | `timber` | oversized beams, posts, carved poles, idols |
-| thatch | `0xb89a55` | `fabric` | roofs (the dominant silhouette of every building) |
-| thatch shade | `0x8a7440` | `fabric` | roof ridge bundles, eaves |
+| thatch | `0x8a6a3a` | `fabric` | roofs (the dominant silhouette of every building) |
+| thatch shade | `0x5a4424` | `fabric` | alternate roof courses, ridge bundles, eaves |
 | daub | `0xd8cdb0` | `plaster` | wattle-and-daub wall infill |
 | stone | `0x8d8a80` | `stone` | foundations, basins, standing stones |
 | stone dark | `0x5f5d57` | `stone` | shadowed stones, cairns |

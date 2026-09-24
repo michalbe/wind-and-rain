@@ -1,15 +1,17 @@
-// Zherca, Rain Priest. Candidate C: different reading: pale linen robe under a full-length team cloak
-// with a deep hood, wooden bowl of water, staff crowned by a rain-cloud of hanging drops.
+// Zherca, Rain Priest. A tall hooded column: full-length team mantle and peaked hood over a pale
+// linen robe, a wooden bowl of water in the left hand, and a big staff crowned by a rain-drum
+// held high above the head, drops hanging from its rim.
 export default function (THREE) {
   const g = new THREE.Group();
   const mat = (hex, name, o = {}) => { const m = new THREE.MeshStandardMaterial({ color: hex, roughness: 0.85, ...o }); if (name) m.name = name; return m; };
-  const linen = mat(0xe6dcc3, 'fabric'), team = mat(0xc0282d, 'fabric', { side: THREE.DoubleSide }), ochre = mat(0xc98a2b, 'fabric');
+  const linen = mat(0xe6dcc3, 'fabric', { side: THREE.DoubleSide }), team = mat(0xc0282d, 'fabric', { side: THREE.DoubleSide }), ochre = mat(0xc98a2b, 'fabric', { side: THREE.DoubleSide });
   const skin = mat(0xd9a07a), hair = mat(0x3b2618), wood = mat(0x5e4029, 'timber', { side: THREE.DoubleSide }), water = mat(0x4f8fb0, null, { roughness: 0.15 });
   const J = (p, x, y, z) => { const o = new THREE.Object3D(); o.position.set(x, y, z); p.add(o); return o; };
   const add = (p, geo, m, pos = [0, 0, 0], rot = [0, 0, 0], sc = [1, 1, 1]) => {
     const me = new THREE.Mesh(geo, m); me.position.set(...pos); me.rotation.set(...rot); me.scale.set(...sc); p.add(me); return me; };
   const cap = (r, len) => new THREE.CylinderGeometry(r, r * 0.9, len + r * 1.4, 7);
   const box = (x, y, z) => new THREE.BoxGeometry(x, y, z);
+  const lathe = (pts, s = 10, p0 = 0, pl = Math.PI * 2) => new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), s, p0, pl);
 
   const hips = J(g, 0, 0.92, 0);
   const spine = J(hips, 0, 0.06, 0);
@@ -19,58 +21,62 @@ export default function (THREE) {
   const lHip = J(hips, 0.1, -0.04, 0), rHip = J(hips, -0.1, -0.04, 0);
   const lKnee = J(lHip, 0, -0.42, 0), rKnee = J(rHip, 0, -0.42, 0);
 
-  // ---- linen robe, hexagonal, with ochre hem and front band
+  // ---- linen robe (shows in the mantle's front opening), ochre hem and front band
   add(hips, new THREE.CylinderGeometry(0.19, 0.3, 0.88, 8), linen, [0, -0.41, 0], [0, Math.PI / 8, 0]);
   add(hips, new THREE.CylinderGeometry(0.3, 0.31, 0.07, 8, 1, true), ochre, [0, -0.81, 0], [0, Math.PI / 8, 0], [1.02, 1, 1.02]);
   add(hips, box(0.1, 0.8, 0.03), ochre, [0, -0.4, 0.23], [-0.13, 0, 0]);
-  add(hips, new THREE.TorusGeometry(0.2, 0.03, 4, 9), ochre, [0, 0.03, 0], [Math.PI / 2, 0, 0], [1, 0.85, 1]);
+  add(hips, new THREE.CylinderGeometry(0.205, 0.205, 0.06, 9, 1, true), ochre, [0, 0.03, 0], [0, 0, 0], [1, 1, 0.85]);
 
-  // ---- cloak: hangs from the shoulders (spine) to the ankles, open at the front
+  // ---- full-length team mantle from the shoulders (spine) to the ground, a narrow front opening
   const cloak = J(spine, 0, 0.36, -0.02);
-  add(cloak, new THREE.CylinderGeometry(0.2, 0.42, 1.28, 9, 1, true, Math.PI * 0.28, Math.PI * 1.44), team, [0, -0.6, -0.03], [0, 0, 0], [1, 1, 0.8]);
-  add(cloak, new THREE.CylinderGeometry(0.17, 0.25, 0.1, 9, 1, true), team, [0, 0.0, 0], [0, 0, 0], [1, 1, 0.85]);
-  add(cloak, new THREE.CylinderGeometry(0.42, 0.425, 0.05, 9, 1, true, Math.PI * 0.28, Math.PI * 1.44), ochre, [0, -1.2, -0.03], [0, 0, 0], [1.01, 1, 0.81]);
-  const rAt = (y) => 0.2 + (-y / 1.28) * 0.22 + 0.006;
-  for (const y of [-0.42, -0.95]) add(cloak, new THREE.CylinderGeometry(rAt(y - 0.03), rAt(y + 0.03), 0.06, 9, 1, true, Math.PI * 0.28, Math.PI * 1.44), ochre, [0, y + 0.03 - 0.03, -0.03], [0, 0, 0], [1, 1, 0.8]);
-  add(cloak, box(0.07, 1.1, 0.02), ochre, [0, -0.62, -0.03 - rAt(-0.62) * 0.8 - 0.005], [0.137, 0, 0]);
-  add(cloak, box(0.18, 0.05, 0.02), ochre, [0, -0.62, -0.03 - rAt(-0.62) * 0.8 - 0.01], [0.137, 0, Math.PI / 4]);
-  add(cloak, box(0.18, 0.05, 0.02), ochre, [0, -0.62, -0.03 - rAt(-0.62) * 0.8 - 0.01], [0.137, 0, -Math.PI / 4]);
-  add(cloak, new THREE.SphereGeometry(0.045, 6, 4), ochre, [0.12, -0.02, 0.15]);
-  add(cloak, new THREE.SphereGeometry(0.045, 6, 4), ochre, [-0.12, -0.02, 0.15]);
+  const o0 = Math.PI * 0.16, ol = Math.PI * 1.68;
+  add(cloak, lathe([[0.2, 0.02], [0.3, -0.12], [0.33, -0.5], [0.4, -1.0], [0.47, -1.3]], 11, o0, ol), team, [0, 0, 0], [0, 0, 0], [1, 1, 0.82]);
+  add(cloak, lathe([[0.465, -1.24], [0.475, -1.31]], 11, o0, ol), ochre, [0, 0, 0], [0, 0, 0], [1.012, 1, 0.832]);
+  add(cloak, lathe([[0.395, -0.95], [0.408, -1.02]], 11, o0, ol), ochre, [0, 0, 0], [0, 0, 0], [1.012, 1, 0.832]);
+  // shoulder mantle: a closed team capelet that reads as one broad red disc from above
+  add(cloak, lathe([[0.13, 0.1], [0.26, 0.04], [0.37, -0.1], [0.4, -0.22]], 11), team, [0, 0, 0], [0, 0, 0], [1, 1, 0.82]);
+  add(cloak, lathe([[0.4, -0.22], [0.41, -0.18], [0.405, -0.16]], 11), ochre, [0, 0, 0], [0, 0, 0], [1, 1, 0.82]);
+  // back sigil: crossed ochre bands
+  add(cloak, box(0.07, 0.9, 0.02), ochre, [0, -0.72, -0.335], [0.07, 0, 0]);
+  add(cloak, box(0.2, 0.05, 0.02), ochre, [0, -0.6, -0.33], [0.07, 0, Math.PI / 4]);
+  add(cloak, box(0.2, 0.05, 0.02), ochre, [0, -0.6, -0.33], [0.07, 0, -Math.PI / 4]);
+  add(cloak, new THREE.SphereGeometry(0.05, 6, 4), ochre, [0.12, 0.0, 0.2]);
+  add(cloak, new THREE.SphereGeometry(0.05, 6, 4), ochre, [-0.12, 0.0, 0.2]);
 
   for (const [hip, knee] of [[lHip, lKnee], [rHip, rKnee]]) {
     add(hip, cap(0.07, 0.28), linen, [0, -0.21, 0]);
     add(knee, cap(0.055, 0.28), hair, [0, -0.2, 0]);
-    add(knee, box(0.13, 0.09, 0.24), hair, [0, -0.455, 0.04]);
+    add(knee, box(0.13, 0.09, 0.24), hair, [0, -0.455, 0.05]);
   }
 
   // ---- torso
   add(spine, box(0.38, 0.4, 0.24), linen, [0, 0.19, 0]);
   add(spine, box(0.16, 0.36, 0.02), ochre, [0, 0.19, 0.125]);
-  add(spine, box(0.1, 0.04, 0.025), linen, [0, 0.27, 0.13]);
-  add(spine, box(0.1, 0.04, 0.025), linen, [0, 0.15, 0.13]);
 
-  // ---- head: long beard, deep hood with a brim
-  add(head, cap(0.05, 0.04), skin, [0, 0.03, 0]);
-  add(head, new THREE.SphereGeometry(0.17, 9, 7), skin, [0, 0.19, 0.01]);
-  add(head, box(0.05, 0.09, 0.06), skin, [0, 0.19, 0.18]);
-  add(head, box(0.15, 0.035, 0.03), hair, [0, 0.25, 0.16]);
-  add(head, box(0.04, 0.025, 0.02), hair, [0.055, 0.215, 0.16]);
-  add(head, box(0.04, 0.025, 0.02), hair, [-0.055, 0.215, 0.16]);
-  add(head, box(0.22, 0.2, 0.08), hair, [0, 0.06, 0.13], [0.2, 0, 0]);
-  add(head, new THREE.ConeGeometry(0.11, 0.26, 4), hair, [0, -0.12, 0.17], [Math.PI + 0.25, Math.PI / 4, 0], [1, 1, 0.6]);
-  add(head, box(0.22, 0.05, 0.06), hair, [0, 0.14, 0.18]);
-  const hood = J(head, 0, 0.2, -0.02);
-  hood.rotation.x = -0.25;
-  add(hood, new THREE.SphereGeometry(0.22, 9, 6, Math.PI * 0.5 + 0.8, Math.PI * 2 - 1.6, 0, Math.PI * 0.75), team);
-  add(hood, new THREE.ConeGeometry(0.08, 0.3, 6), team, [0, -0.05, -0.24], [-2.75, 0, 0]);
+  // ---- head (x1.25): long beard, deep team hood with a tall peak
+  const hg = J(head, 0, 0, 0); hg.scale.setScalar(1.25);
+  add(hg, cap(0.05, 0.04), skin, [0, 0.03, 0]);
+  add(hg, new THREE.SphereGeometry(0.17, 9, 7), skin, [0, 0.19, 0.01]);
+  add(hg, box(0.05, 0.09, 0.06), skin, [0, 0.19, 0.18]);
+  add(hg, box(0.15, 0.035, 0.03), hair, [0, 0.25, 0.16]);
+  add(hg, box(0.04, 0.025, 0.02), hair, [0.055, 0.215, 0.16]);
+  add(hg, box(0.04, 0.025, 0.02), hair, [-0.055, 0.215, 0.16]);
+  add(hg, box(0.22, 0.2, 0.08), hair, [0, 0.06, 0.13], [0.2, 0, 0]);
+  add(hg, new THREE.ConeGeometry(0.11, 0.3, 4), hair, [0, -0.13, 0.17], [Math.PI + 0.25, Math.PI / 4, 0], [1, 1, 0.6]);
+  add(hg, box(0.22, 0.05, 0.06), hair, [0, 0.14, 0.18]);
+  const hood = J(hg, 0, 0.2, -0.02);
+  hood.rotation.x = -0.2;
+  add(hood, new THREE.SphereGeometry(0.225, 10, 6, Math.PI * 0.5 + 0.75, Math.PI * 2 - 1.5, 0, Math.PI * 0.78), team);
+  add(hood, new THREE.TorusGeometry(0.2, 0.03, 3, 8, Math.PI * 1.1), ochre, [0, 0.0, 0.1], [0.2, 0, -Math.PI * 0.05], [1, 1.15, 1]);
+  add(hood, new THREE.ConeGeometry(0.19, 0.3, 7), team, [0, 0.15, -0.06], [-0.35, 0, 0]);
 
-  // ---- arms
+  // ---- arms: team upper sleeves, linen cuffs, large hands
   for (const [sh, el] of [[lShoulder, lElbow], [rShoulder, rElbow]]) {
-    add(sh, cap(0.075, 0.18), team, [0, -0.12, 0]);
-    add(el, new THREE.CylinderGeometry(0.075, 0.12, 0.22, 7, 1, true), linen, [0, -0.1, 0]);
+    add(sh, cap(0.08, 0.18), team, [0, -0.12, 0]);
+    add(el, new THREE.CylinderGeometry(0.08, 0.14, 0.22, 7, 1, true), team, [0, -0.1, 0]);
+    add(el, new THREE.CylinderGeometry(0.14, 0.145, 0.04, 7, 1, true), ochre, [0, -0.21, 0]);
     add(el, cap(0.045, 0.12), skin, [0, -0.18, 0]);
-    add(el, box(0.1, 0.13, 0.07), skin, [0, -0.3, 0.01]);
+    add(el, box(0.125, 0.16, 0.09), skin, [0, -0.31, 0.01]);
   }
   lShoulder.rotation.set(-0.5, 0, 0.12);
   lElbow.rotation.set(-1.0, 0, 0);
@@ -86,26 +92,29 @@ export default function (THREE) {
     return h;
   };
 
-  // wooden bowl
-  const bowl = holdLevel(lElbow, [0, -0.35, 0.02], new THREE.Euler(0, 0, 0));
-  add(bowl, new THREE.SphereGeometry(0.17, 9, 5, 0, Math.PI * 2, Math.PI * 0.5, Math.PI * 0.5), wood, [0, 0.12, 0], [0, 0, 0], [1, 0.6, 1]);
-  add(bowl, new THREE.CircleGeometry(0.155, 9), water, [0, 0.1, 0], [-Math.PI / 2, 0, 0]);
-  add(bowl, new THREE.TorusGeometry(0.165, 0.015, 4, 9), wood, [0, 0.12, 0], [Math.PI / 2, 0, 0]);
+  // wooden bowl of water
+  const bowl = holdLevel(lElbow, [0, -0.37, 0.02], new THREE.Euler(0, 0, 0));
+  add(bowl, new THREE.SphereGeometry(0.19, 9, 4, 0, Math.PI * 2, Math.PI * 0.5, Math.PI * 0.5), wood, [0, 0.13, 0], [0, 0, 0], [1, 0.6, 1]);
+  add(bowl, new THREE.CircleGeometry(0.175, 9), water, [0, 0.11, 0], [-Math.PI / 2, 0, 0]);
+  add(bowl, new THREE.TorusGeometry(0.185, 0.017, 4, 9), wood, [0, 0.13, 0], [Math.PI / 2, 0, 0]);
 
-  // staff with a rain-cloud head
-  const grip = holdLevel(rElbow, [0, -0.31, 0.01], new THREE.Euler(0.05, 0, -0.05));
+  // big staff with a rain-drum held high above the head
+  const grip = holdLevel(rElbow, [0, -0.32, 0.01], new THREE.Euler(-0.12, 0, 0.2));
   const gy = grip.getWorldPosition(new THREE.Vector3()).y;
-  const top = 1.72 - gy, bot = 0.03 - gy;
-  add(grip, new THREE.CylinderGeometry(0.034, 0.04, top - bot, 7), wood, [0, (top + bot) / 2, 0]);
-  add(grip, new THREE.CylinderGeometry(0.05, 0.05, 0.05, 7), ochre, [0, 0.3, 0]);
-  add(grip, new THREE.SphereGeometry(0.09, 7, 5), ochre, [0, top, 0], [0, 0, 0], [1.4, 0.7, 1]);
-  add(grip, new THREE.SphereGeometry(0.06, 6, 4), ochre, [0.08, top + 0.03, 0.02]);
-  add(grip, new THREE.SphereGeometry(0.06, 6, 4), ochre, [-0.07, top + 0.02, -0.02]);
-  for (let i = 0; i < 5; i++) {
-    const a = i * 1.26;
-    const x = Math.sin(a) * 0.1, z = Math.cos(a) * 0.08, l = 0.12 + (i % 2) * 0.08;
-    add(grip, box(0.012, l, 0.012), ochre, [x, top - 0.04 - l / 2, z]);
-    add(grip, new THREE.ConeGeometry(0.025, 0.06, 5), water, [x, top - 0.06 - l, z], [Math.PI, 0, 0]);
+  const ct = Math.cos(0.12) * Math.cos(0.2), L = (2.09 - gy) / ct, bot = (0.03 - gy) / ct, dT = L - 0.08;
+  add(grip, new THREE.CylinderGeometry(0.04, 0.046, dT - bot, 7), wood, [0, (dT + bot) / 2, 0]);
+  add(grip, new THREE.CylinderGeometry(0.058, 0.058, 0.06, 7), ochre, [0, 0.28, 0]);
+  add(grip, new THREE.CylinderGeometry(0.058, 0.058, 0.06, 7), ochre, [0, -0.1, 0]);
+  const drum = J(grip, 0, dT, 0); drum.rotation.set(0.12, 0, -0.2);           // drum level in the world
+  add(drum, new THREE.CylinderGeometry(0.22, 0.2, 0.15, 12), wood, [0, 0, 0]);
+  add(drum, new THREE.CylinderGeometry(0.215, 0.215, 0.012, 12), linen, [0, 0.078, 0]);
+  add(drum, new THREE.CylinderGeometry(0.228, 0.228, 0.04, 12, 1, true), ochre, [0, 0.06, 0]);
+  add(drum, new THREE.CylinderGeometry(0.21, 0.21, 0.04, 12, 1, true), ochre, [0, -0.06, 0]);
+  add(drum, new THREE.CylinderGeometry(0.075, 0.03, 0.12, 7), wood, [0, -0.13, 0]);
+  for (let i = 0; i < 7; i++) {
+    const a = i * Math.PI * 2 / 7 + 0.2, x = Math.sin(a) * 0.19, z = Math.cos(a) * 0.19, l = 0.1 + (i % 3) * 0.07;
+    add(drum, new THREE.CylinderGeometry(0.009, 0.009, l, 3, 1, true), ochre, [x, -0.07 - l / 2, z]);
+    add(drum, new THREE.ConeGeometry(0.035, 0.1, 5), water, [x, -0.1 - l, z], [Math.PI, 0, 0]);
   }
 
   // ---- place

@@ -49,7 +49,7 @@ async function boot() {
   veg.rocks = await instanced('rock_cluster', layout.rocks, heightAt, { surfSize: S });
   veg.reeds = await instanced('reeds', layout.reeds, heightAt, { shadow: false, surfaces: false });
   veg.grass = await instanced('grass_tuft', layout.grass, heightAt, { shadow: false, surfaces: false, tile: 24 });
-  veg.pines.bright = 1.3; veg.birches.bright = 1.1;
+  veg.pines.bright = 1.1; veg.birches.bright = 1.0;
   for (const v of Object.values(veg)) scene.add(v.group);
 
   step(0.45, 'finding the sacred springs');

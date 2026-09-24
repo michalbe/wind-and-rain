@@ -45,25 +45,26 @@ export default function (THREE) {
   add(spine, ext(tab, 0.025), team, [0, 0.26, -0.25], [0.12, 0, 0]);
 
   // ---- head: extruded forked beard, lathe spangenhelm with spike, nasal, mail aventail
-  add(head, lathe([[0.09, 0], [0.1, 0.12]], 7), skin);
-  add(head, new THREE.SphereGeometry(0.19, 8, 6), skin, [0, 0.21, 0.01], [0, 0, 0], [1, 1.05, 1]);
-  add(head, new THREE.ConeGeometry(0.04, 0.1, 4), skin, [0, 0.19, 0.21], [Math.PI / 2 + 0.3, 0, 0]);
-  add(head, new THREE.BoxGeometry(0.045, 0.03, 0.02), hair, [0.07, 0.235, 0.18]);
-  add(head, new THREE.BoxGeometry(0.045, 0.03, 0.02), hair, [-0.07, 0.235, 0.18]);
+  const hg = J(head, 0, 0, 0); hg.scale.setScalar(1.25);   // large head
+  add(hg, lathe([[0.09, 0], [0.1, 0.12]], 7), skin);
+  add(hg, new THREE.SphereGeometry(0.19, 8, 6), skin, [0, 0.21, 0.01], [0, 0, 0], [1, 1.05, 1]);
+  add(hg, new THREE.ConeGeometry(0.04, 0.1, 4), skin, [0, 0.19, 0.21], [Math.PI / 2 + 0.3, 0, 0]);
+  add(hg, new THREE.BoxGeometry(0.045, 0.03, 0.02), hair, [0.07, 0.235, 0.18]);
+  add(hg, new THREE.BoxGeometry(0.045, 0.03, 0.02), hair, [-0.07, 0.235, 0.18]);
   const beard = new THREE.Shape(); beard.moveTo(-0.17, 0.12); beard.lineTo(0.17, 0.12); beard.quadraticCurveTo(0.18, -0.1, 0.1, -0.22); beard.lineTo(0.06, -0.34); beard.lineTo(0.0, -0.22); beard.lineTo(-0.06, -0.34); beard.lineTo(-0.1, -0.22); beard.quadraticCurveTo(-0.18, -0.1, -0.17, 0.12);
-  add(head, ext(beard, 0.12), hair, [0, 0.05, 0.14], [0.3, 0, 0]);
-  add(head, new THREE.BoxGeometry(0.26, 0.05, 0.06), hair, [0, 0.14, 0.2]);
-  add(head, lathe([[0.215, 0.0], [0.22, 0.06], [0.2, 0.14], [0.14, 0.22], [0.06, 0.29], [0.02, 0.33], [0.0, 0.36]], 8), iron, [0, 0.25, 0]);
-  add(head, lathe([[0.225, -0.01], [0.228, 0.06]], 8), leather, [0, 0.25, 0], [0, 0, 0], [1.01, 1, 1.01]);
-  add(head, new THREE.BoxGeometry(0.05, 0.17, 0.04), iron, [0, 0.19, 0.225]);
-  add(head, lathe([[0.215, 0.1], [0.23, -0.02], [0.25, -0.12]], 8, Math.PI * 0.35, Math.PI * 1.3), iron, [0, 0.25, -0.01]);
+  add(hg, ext(beard, 0.12), hair, [0, 0.05, 0.14], [0.3, 0, 0]);
+  add(hg, new THREE.BoxGeometry(0.26, 0.05, 0.06), hair, [0, 0.14, 0.2]);
+  add(hg, lathe([[0.215, 0.0], [0.22, 0.06], [0.2, 0.14], [0.14, 0.22], [0.06, 0.29], [0.02, 0.33], [0.0, 0.36]], 8), iron, [0, 0.25, 0]);
+  add(hg, lathe([[0.225, -0.01], [0.228, 0.06]], 8), leather, [0, 0.25, 0], [0, 0, 0], [1.01, 1, 1.01]);
+  add(hg, new THREE.BoxGeometry(0.05, 0.17, 0.04), iron, [0, 0.19, 0.225]);
+  add(hg, lathe([[0.215, 0.1], [0.23, -0.02], [0.25, -0.12]], 8, Math.PI * 0.35, Math.PI * 1.3), iron, [0, 0.25, -0.01]);
 
   // ---- arms: lathe pauldrons and arms
   for (const [sh, el, s] of [[lShoulder, lElbow, 1], [rShoulder, rElbow, -1]]) {
     add(sh, lathe([[0.0, 0.12], [0.1, 0.1], [0.17, 0.02], [0.18, -0.06]], 8), iron, [0.03 * s, 0.0, 0], [0, 0, -0.35 * s]);
     add(sh, lathe([[0.12, 0.0], [0.12, -0.2], [0.1, -0.34]], 8), iron);
     add(el, lathe([[0.09, 0.02], [0.1, -0.06], [0.1, -0.2], [0.085, -0.24]], 8), leather);
-    add(el, new THREE.BoxGeometry(0.16, 0.15, 0.14), skin, [0, -0.32, 0.01]);
+    add(el, new THREE.BoxGeometry(0.2, 0.19, 0.175), skin, [0, -0.33, 0.01]);   // large hands
   }
   lShoulder.rotation.set(-0.2, 0, 0.14);
   lElbow.rotation.set(-0.95, 0, 0);

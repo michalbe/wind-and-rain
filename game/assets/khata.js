@@ -7,7 +7,7 @@ export default function (THREE) {
   const PI = Math.PI;
   const PAL = {
     team: [0xc0282d, 'fabric'], timL: [0xa27a4f, 'timber'], timD: [0x5e4029, 'timber'],
-    thatch: [0xb89a55, 'fabric'], thatchS: [0x8a7440, 'fabric'], daub: [0xd8cdb0, 'plaster'],
+    thatch: [0x8a6a3a, 'fabric'], thatchS: [0x5a4424, 'fabric'], daub: [0xd8cdb0, 'plaster'],
     stone: [0x8d8a80, 'stone'], stoneD: [0x5f5d57, 'stone'], linen: [0xe6dcc3, 'fabric'],
     ochre: [0xc98a2b, 'fabric'], iron: [0x6f7479, 'metal'], leather: [0x6b4526, 'fabric'],
     bone: [0xe0cfa8, ''], bark: [0x4a3322, 'timber'], pine: [0x2f4f2c, 'foliage'],
@@ -85,30 +85,45 @@ export default function (THREE) {
       if (h > 0.15) box(pw * 0.92, h, 0.1, k, x, yW + h / 2, z + J(0.02), 0, 0, J(0.02), p);
     }
   }
-  // thatch roof, two slopes; returns geometry info for trims
+  // thatch roof, two slopes of stepped courses; returns geometry info for trims.
+  // Each course is kicked out at its lower edge (o.lip, ~0.25 m) so it throws a shadow line onto
+  // the next, and courses alternate light/dark thatch so the banding reads from a high camera.
   function roof(p, o) {
     const a = Math.atan2(o.rise, o.w / 2), c = Math.cos(a), s = Math.sin(a), yR = o.yW + o.rise;
     const Ls = (o.w / 2 + o.over) / c, zf = o.ozF ?? o.oz, zb = o.ozB ?? o.oz, L = o.l + zf + zb, zc = (zf - zb) / 2;
-    const n = o.courses || 1, th = o.th;
-    for (const sx of [-1, 1]) for (let i = 0; i < n; i++) {
-      const t0 = Ls * i / n, t1 = Ls * (i + 1) / n + (i < n - 1 ? 0.2 : 0), tm = (t0 + t1) / 2, ln = t1 - t0;
-      const t = th * (1 + i * (o.step ?? 0.15));
-      box(ln, t, L + J(0.1) + i * 0.08, o.k || 'thatch', sx * (c * tm + s * t / 2), yR - s * tm + c * t / 2, zc + J(0.05), 0, J(0.01), -sx * a + J(0.02), p);
+    const n = o.courses || 1, th = o.th, lip = o.lip ?? 0.25;
+    for (const sx of [-1, 1]) {
+      // point on this slope: t = distance down-slope from the ridge, q = height off the roof plane
+      const P = (t, q) => [sx * (c * t + s * q), yR - s * t + c * q];
+      for (let i = 0; i < n; i++) {
+        const t0 = Ls * i / n, t1 = Ls * (i + 1) / n + (i < n - 1 ? 0.25 : 0);
+        const A = P(t0, th / 2), B = P(t1, th / 2 + lip), ln = Math.hypot(B[0] - A[0], B[1] - A[1]);
+        const k = i % 2 ? (o.kS || 'thatchS') : (o.k || 'thatch');
+        box(ln + 0.02, th, L + J(0.1) + i * 0.1, k, (A[0] + B[0]) / 2, (A[1] + B[1]) / 2, zc + J(0.05), 0, J(0.01), Math.atan2(B[1] - A[1], B[0] - A[0]) + J(0.015), p);
+      }
+      if (o.rolls) for (let i = 1; i < n; i++) { // dark rope binding just under each lip
+        const Q = P(Ls * i / n + 0.12, th * 1.05);
+        cyl(th * 0.3, th * 0.3, L + 0.05, 'timD', Q[0], Q[1], zc, 5, PI / 2, 0, 0, p);
+      }
+      if (o.eave !== false) { const E = P(Ls, lip + th * 0.35); cyl(th * 0.6, th * 0.6, L + 0.1 + n * 0.1, o.kS || 'thatchS', E[0], E[1], zc, 6, PI / 2, 0, 0, p); }
+      if (o.cloth) { // team-colour ridge cloth laid over the top course, both slopes
+        const C0 = P(0.1, th * 1.02), C1 = P(o.cloth, th * 1.02 + lip * o.cloth / (Ls / n));
+        box(Math.hypot(C1[0] - C0[0], C1[1] - C0[1]), 0.08, L * (o.clothL ?? 0.92), 'team', (C0[0] + C1[0]) / 2, (C0[1] + C1[1]) / 2, zc, 0, 0, Math.atan2(C1[1] - C0[1], C1[0] - C0[0]), p);
+      }
     }
-    if (o.rolls) for (const sx of [-1, 1]) for (let i = 1; i < n; i++) {
-      const t = Ls * i / n + 0.1, tt = th * (1 + i * (o.step ?? 0.15));
-      cyl(th * 0.42, th * 0.42, L + 0.05, o.kS || 'thatchS', sx * (c * t + s * tt * 0.8), yR - s * t + c * tt * 0.8, zc, 6, PI / 2, 0, J(0.02), p);
+    const yTop = yR + th / c * 0.75;
+    if (o.ridge !== false) {
+      cyl(th * 0.95, th * 0.95, L + 0.35, o.kS || 'thatchS', 0, yTop, zc, 7, PI / 2, 0, 0, p);
+      box(0.34, 0.3, L + 0.9, 'timD', 0, yTop + th * 0.95 + 0.08, zc, 0, 0, 0, p); // dark ridge beam
+      for (const z of [-0.42, -0.14, 0.14, 0.42]) box(0.5, 0.18, 0.18, 'timD', 0, yTop + th * 0.95 - 0.02, zc + z * L, 0, 0, 0, p); // pegs
     }
-    const tE = th * (1 + (n - 1) * (o.step ?? 0.15));
-    if (o.ridge !== false) cyl(th * 0.95, th * 0.95, L + 0.35, o.kS || 'thatchS', 0, yR + th / c * 0.7, zc, 7, PI / 2, 0, 0, p);
-    if (o.eave !== false) for (const sx of [-1, 1]) cyl(tE * 0.62, tE * 0.62, L + 0.1, o.kS || 'thatchS', sx * (c * Ls + s * tE * 0.35), yR - s * Ls + c * tE * 0.35, zc, 6, PI / 2, 0, 0, p);
-    return { a, c, s, yR, Ls, L, zc, zf, zb, th };
+    return { a, c, s, yR, Ls, L, zc, zf, zb, th, lip };
   }
   // crossed barge boards ending in horse heads, gable in plane z
   function horses(p, R, z, k = 'timD', ext = 1.0, bw = 0.3) {
-    const { c, s, yR, Ls, th } = R;
+    const { c, s, yR, Ls, th, lip } = R;
     for (const sx of [-1, 1]) {
-      const off = th + 0.08, zz = z + sx * 0.06;
+      const off = th + lip + 0.08, zz = z + sx * 0.06;
       const P = (t) => [sx * (c * t + s * off), yR - s * t + c * off, zz];
       bar(P(Ls * 0.97), P(-ext), bw, 0.14, k, p);
       const E = P(-ext), o = -sx; // head points outward to the -sx side
@@ -301,7 +316,7 @@ export default function (THREE) {
   for (const s of [-1, 1]) { box(W + 0.5, 0.3, 0.5, 'stone', 0, 0.15, s * D / 2, 0, 0, 0); box(0.5, 0.3, D, 'stone', s * W / 2, 0.15, 0, 0, 0, 0); }
   const yW = logWalls(g, W, D, y0, 1.9, 0.17, 'timL', { door: { w: 0.95, h: 1.7 }, over: 0.36 });
   const rise = 1.85;
-  const R = roof(g, { w: W, l: D, yW, rise, over: 0.5, ozF: 0.6, ozB: 0.4, th: 0.34, courses: 3, step: 0.12, rolls: true });
+  const R = roof(g, { w: W, l: D, yW, rise, over: 0.5, ozF: 0.6, ozB: 0.4, th: 0.34, courses: 3, lip: 0.22, rolls: true });
   triPlate(g, W * 0.98, rise * 0.97, D / 2 + 0.05, yW, 'daub');
   triPlate(g, W * 0.98, rise * 0.97, -D / 2 - 0.05, yW, 'daub');
   for (const s of [-1, 1]) { // gable half-timber
