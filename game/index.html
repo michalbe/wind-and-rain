@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a130c">
+<title>Wind &amp; Rain</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+<link rel="icon" href="data:,">
+<style>
+  :root { --gold:#e8c678; --wood:#3a2a1a; --wood2:#261a0f; --edge:#7a5a34; --ink:#f1e6cf; --wind:#cfeaff; --rain:#7fc8ff; --red:#e0453e; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
+  html,body { margin:0; height:100%; overflow:hidden; background:#120d08; color:var(--ink);
+    font-family: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif; }
+  canvas#c { display:block; width:100vw; height:100vh; touch-action:none; }
+  .pe { pointer-events:auto; }
+  .frame { background:linear-gradient(#4a3520,#2b1e11); border:2px solid var(--edge); box-shadow:inset 0 0 0 1px #1a1008, inset 0 2px 0 rgba(255,220,160,.15), 0 3px 10px rgba(0,0,0,.6); border-radius:4px; }
+
+  /* loading and start */
+  #load, #start, #end { position:fixed; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; padding:24px; }
+  #load { background:radial-gradient(ellipse at 50% 40%, #2c2014, #0c0805); }
+  h1 { margin:0; font-size:clamp(34px,9vw,72px); letter-spacing:.12em; font-weight:400; color:var(--gold); text-shadow:0 2px 0 #3b260f, 0 0 28px rgba(232,198,120,.35); }
+  h1 em { font-style:normal; color:var(--ink); font-size:.6em; vertical-align:middle; padding:0 .15em; }
+  .sub { font-size:13px; letter-spacing:.3em; color:#b9a27c; text-transform:uppercase; }
+  #bar { width:min(340px,70vw); height:6px; padding:1px; } #barf { height:100%; width:0; background:linear-gradient(90deg,#9fd4ff,#e8c678); transition:width .2s; border-radius:2px; }
+  #loadmsg { font-size:13px; color:#a38e6c; font-style:italic; min-height:1.2em; }
+  #start { display:none; background:radial-gradient(ellipse at 50% 55%, rgba(20,14,8,.35), rgba(8,5,3,.88)); }
+  #start.on, #end.on { display:flex; }
+  #start p { max-width:min(560px,90vw); margin:0; font-size:15px; line-height:1.65; color:#dccdb0; }
+  #start p b { color:var(--wind); font-weight:400; } #start p i { color:var(--rain); font-style:normal; }
+  .btn { font:inherit; font-size:18px; letter-spacing:.2em; padding:14px 36px; color:var(--gold); cursor:pointer; text-transform:uppercase; }
+  .btn:hover { color:#fff3d0; }
+  .keys { font-size:12px; color:#9a8768; line-height:1.8; max-width:560px; }
+  #end { display:none; background:rgba(8,5,3,.82); z-index:60; }
+  #end p { max-width:560px; line-height:1.7; color:#dccdb0; }
+
+  /* HUD */
+  #ui { position:fixed; inset:0; pointer-events:none; z-index:10; display:none; }
+  #ui.on { display:block; }
+  #top { position:absolute; top:max(6px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); display:flex; gap:4px; align-items:center; padding:5px 10px; font-size:15px; white-space:nowrap; }
+  #top .res { display:flex; align-items:baseline; gap:5px; padding:0 8px; }
+  #top .res b { font-weight:400; min-width:2.2em; text-align:right; }
+  #top .res small { font-size:11px; opacity:.75; }
+  #top .w b, #top .w .ic { color:var(--wind); } #top .r b, #top .r .ic { color:var(--rain); }
+  #top .full b { color:var(--red); }
+  #top .ic { font-size:16px; display:inline-flex; align-self:center; } #top .s .ic { color:#e8c678; } #top .sep { width:1px; height:18px; background:var(--edge); }
+  #clock { font-size:12px; color:#b9a27c; padding:0 6px; }
+  #tbtns { position:absolute; top:max(6px,env(safe-area-inset-top)); right:max(8px,env(safe-area-inset-right)); display:flex; gap:4px; }
+  .sq { width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; color:var(--ink); padding:0; font-family:inherit; }
+  .sq.on { color:var(--gold); border-color:var(--gold); }
+  #objs { position:absolute; left:max(8px,env(safe-area-inset-left)); top:max(52px,calc(env(safe-area-inset-top) + 46px)); padding:7px 12px 8px; max-width:250px; font-size:14px; }
+  #objs .ot { font-size:10px; letter-spacing:.25em; text-transform:uppercase; color:var(--gold); } #objs .ot small { color:#a38e6c; letter-spacing:.1em; }
+  #objs .oc { margin-top:2px; } #objs.min .oc { display:none; }
+  #toast { position:absolute; left:50%; top:22%; transform:translateX(-50%); padding:8px 16px; font-size:15px; opacity:0; transition:opacity .25s; text-shadow:0 2px 6px #000; background:rgba(20,12,6,.72); border:1px solid var(--edge); border-radius:3px; max-width:90vw; text-align:center; }
+  #toast.on { opacity:1; } #toast.bad { color:#ffb0a0; } #toast.good { color:#d8f5b0; }
+  #placehint { position:absolute; left:50%; bottom:calc(var(--panelH) + 14px); transform:translateX(-50%); font-size:13px; padding:6px 12px; background:rgba(20,12,6,.8); border:1px solid var(--edge); border-radius:3px; display:none; white-space:nowrap; }
+  #placehint.on { display:block; }
+  #box { position:fixed; border:1px solid #9fff7a; background:rgba(120,255,100,.08); display:none; pointer-events:none; z-index:20; }
+
+  /* bottom panel */
+  :root { --panelH: 132px; }
+  #panel { position:absolute; left:50%; transform:translateX(-50%); bottom:max(6px,env(safe-area-inset-bottom)); width:min(760px,calc(100vw - 12px)); height:var(--panelH); display:flex; gap:8px; padding:8px; pointer-events:auto; }
+  #portrait { width:96px; min-width:96px; height:100%; background:#221a12 center/cover no-repeat; border:2px solid var(--edge); border-radius:3px; box-shadow:inset 0 0 12px rgba(0,0,0,.7); }
+  #info { flex:1; min-width:0; font-size:13px; overflow:hidden; }
+  #info .nm { font-size:18px; color:var(--gold); } #info .tt { font-size:12px; color:#b9a27c; font-style:italic; }
+  #info .foe { color:#9fc0ff; font-size:12px; } #info .neutral { color:#e8e070; font-size:12px; }
+  #info .hp { position:relative; height:14px; background:#1a120a; border:1px solid #5a4028; margin:6px 0 4px; max-width:240px; }
+  #info .hp i { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(#7fd05a,#3f8a2a); }
+  #info .hp b { position:absolute; inset:0; font-size:11px; font-weight:400; text-align:center; line-height:13px; text-shadow:0 1px 2px #000; }
+  #info .st { font-size:12px; color:#d8c9aa; }
+  #info .hint { color:#a38e6c; font-style:italic; padding-top:6px; }
+  #info .multi { display:flex; flex-wrap:wrap; gap:3px; }
+  #info .multi span, #info .queue span { position:relative; width:34px; height:34px; background:#221a12 center/cover; border:1px solid var(--edge); cursor:pointer; }
+  #info .multi span i { position:absolute; left:0; bottom:0; height:3px; background:#6cff5a; }
+  #info .queue { display:flex; gap:3px; margin-top:5px; }
+  #info .queue span i { position:absolute; left:0; bottom:0; width:100%; background:rgba(160,220,255,.45); }
+  #cmds { display:grid; grid-template-columns:repeat(4, 58px); grid-auto-rows:56px; gap:4px; align-content:start; }
+  .cmd { position:relative; padding:0; border:1px solid var(--edge); background:linear-gradient(#3a2a1a,#23180d); color:var(--ink); font-family:inherit; cursor:pointer; border-radius:3px; overflow:hidden; }
+  .cmd:hover { border-color:var(--gold); } .cmd:active { transform:translateY(1px); }
+  .cmd.dim { filter:grayscale(.8) brightness(.6); }
+  .cmd .ic { position:absolute; inset:0; background:center/cover no-repeat; opacity:.95; }
+  .cmd .gl { position:absolute; left:0; right:0; top:9px; text-align:center; font-size:24px; color:#e8c678; line-height:1; }
+  .cmd .lb { position:absolute; left:0; right:0; bottom:1px; font-size:10px; text-align:center; text-shadow:0 1px 2px #000, 0 0 4px #000; background:linear-gradient(transparent, rgba(0,0,0,.7)); line-height:13px; }
+  .cmd .hk { position:absolute; left:2px; top:1px; font-size:10px; color:var(--gold); text-shadow:0 1px 2px #000; }
+  .cmd .cs { position:absolute; right:2px; top:1px; display:flex; flex-direction:column; align-items:flex-end; font-size:9.5px; line-height:10px; text-shadow:0 1px 2px #000, 0 0 3px #000; }
+  .cmd .cs em { font-style:normal; } .cmd .cs .w { color:var(--wind); } .cmd .cs .r { color:var(--rain); }
+  #mmwrap { position:absolute; right:max(8px,env(safe-area-inset-right)); top:max(46px,calc(env(safe-area-inset-top) + 44px)); padding:3px; pointer-events:auto; }
+  #minimap { display:block; cursor:crosshair; touch-action:none; }
+
+  /* touch */
+  #touch { display:none; }
+  #touch.on { display:block; }
+  #stick { position:absolute; left:max(10px,env(safe-area-inset-left)); bottom:calc(var(--panelH) + 18px); width:112px; height:112px; border-radius:50%; border:2px solid rgba(232,198,120,.45); background:rgba(30,20,10,.35); pointer-events:auto; touch-action:none; }
+  #stick.dn { border-color:var(--gold); }
+  #sticknub { position:absolute; left:50%; top:50%; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; background:rgba(232,198,120,.3); border:2px solid rgba(232,198,120,.6); pointer-events:none; }
+  #stick .lab { position:absolute; left:0; right:0; bottom:-18px; text-align:center; font-size:10px; letter-spacing:.2em; color:#b9a27c; text-shadow:0 1px 2px #000; }
+  #tside { position:absolute; right:max(8px,env(safe-area-inset-right)); display:flex; flex-direction:column; gap:5px; pointer-events:auto; }
+  #tside .sq { width:46px; height:40px; font-size:11px; letter-spacing:.05em; }
+
+  @media (max-width: 640px) {
+    :root { --panelH: 186px; }
+    #panel { flex-wrap:wrap; height:var(--panelH); gap:6px; padding:6px; }
+    #portrait { width:64px; min-width:64px; height:64px; }
+    #info { height:64px; flex:1; }
+    #info .nm { font-size:16px; }
+    #cmds { width:100%; grid-template-columns:repeat(6, 1fr); grid-auto-rows:52px; }
+    #top { font-size:13px; padding:4px 6px; left:8px; transform:none; } #top .res { padding:0 4px; } #top .res small { display:none; }
+    #clock { display:none; }
+    #objs { font-size:12px; max-width:190px; top:max(50px,calc(env(safe-area-inset-top) + 46px)); }
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="load">
+  <h1>WIND <em>&amp;</em> RAIN</h1>
+  <div class="sub">a ritual strategy of the old gods</div>
+  <div id="bar" class="frame"><div id="barf"></div></div>
+  <div id="loadmsg">waking the valley</div>
+</div>
+
+<div id="start">
+  <h1>WIND <em>&amp;</em> RAIN</h1>
+  <div class="sub">The Sacred Valley</div>
+  <p>Your Vietras dance, and their dance gathers <b>Wind</b>. Zhercas kneel at the Sacred Springs, and their rite calls <i>Rain</i>. Raise a village from both, train a warband, and destroy the rival clan's Grod in the northeast.</p>
+  <button class="btn frame pe" id="startb">Begin the Rite</button>
+  <div class="keys" id="keys">Left-click or drag to select · Right-click to move, attack or assign · WASD or screen edges to scroll · Wheel to zoom · Ctrl+number to group · Space: home</div>
+</div>
+
+<div id="ui">
+  <div id="top" class="frame pe">
+    <span class="res w"><span class="ic" id="icw"></span><b id="wind">0</b><small id="windrate"></small></span><span class="sep"></span>
+    <span class="res r"><span class="ic" id="icr"></span><b id="rain">0</b><small id="rainrate"></small></span><span class="sep"></span>
+    <span class="res s"><span class="ic" id="ics"></span><b id="supply">0</b></span>
+    <span id="clock">0:00</span>
+  </div>
+  <div id="tbtns"><button class="sq frame pe" id="bObj" title="Objectives"></button><button class="sq frame pe" id="bMute" title="Sound"></button></div>
+  <div id="objs" class="frame pe"></div>
+  <div id="mmwrap" class="frame"><canvas id="minimap" width="160" height="160"></canvas></div>
+  <div id="toast"></div>
+  <div id="placehint"></div>
+  <div id="panel" class="frame empty">
+    <div id="portrait"></div>
+    <div id="info"></div>
+    <div id="cmds"></div>
+  </div>
+  <div id="touch">
+    <div id="stick"><div id="sticknub"></div><div class="lab">CAMERA</div></div>
+    <div id="tside">
+      <button class="sq frame" id="bHome">HOME</button>
+      <button class="sq frame" id="bArmy">ARMY</button>
+      <button class="sq frame" id="bIdle">IDLE</button>
+      <button class="sq frame" id="bBox">BOX</button>
+    </div>
+  </div>
+</div>
+<div id="box"></div>
+
+<div id="end">
+  <h1 id="endh">VICTORY</h1>
+  <p id="endp"></p>
+  <button class="btn frame pe" id="again">Play again</button>
+</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
