@@ -14,7 +14,9 @@ export class RivalAI {
     this.nextWave = 300;        // minute 5: the first patrol
     this.waveN = 0;
     this.building = false;
+    this.site = null;
   }
+  get busy() { return this.building || (this.site && !this.site.dead && !this.site.built); }
   update(dt) {
     this.t += dt; this.tick -= dt;
     if (this.tick > 0 || this.g.over) return;
@@ -32,32 +34,33 @@ export class RivalAI {
 
     if (grod) {
       const q = grod.queue.length;
-      if (!q && vietras.length < 6) g.train(grod, 'vietra');
+      if (!q && vietras.length < 5 && (vietras.length < 4 || this.t > 240)) g.train(grod, 'vietra');
       else if (!q && zhercas.length < 2 + g.aliveB(R, 'shrine').length - 1) g.train(grod, 'zherca');
     }
     // supply
     const cap = g.supplyCap(R), used = g.supplyUsed(R);
-    if (cap - used <= 3 && cap < 60 && !this.building && T.wind >= BUILDINGS.khata.wind && vietras.length > 2) this.buildNear('khata', vietras);
+    if (cap - used <= 3 && cap < 60 && !this.busy && T.wind >= BUILDINGS.khata.wind && vietras.length > 2) this.buildNear('khata', vietras);
     // a sacred grove later on
-    if (this.t > 360 && !g.aliveB(R, 'grove').length && !this.building && T.wind >= 150 && T.rain >= 50 && zhercas.length) this.buildNear('grove', zhercas);
+    if (this.t > 360 && !g.aliveB(R, 'grove').length && !this.busy && T.wind >= 150 && T.rain >= 50 && zhercas.length) this.buildNear('grove', zhercas);
     // contest the exposed spring after minute 8
     const exposed = g.springs[1];
-    if (this.t > 480 && !exposed.shrine && !this.building && T.wind >= 75 && zhercas.length > 1 && !this.expanding) {
+    if (this.t > 480 && !exposed.shrine && !this.busy && T.wind >= 75 && zhercas.length > 1 && !this.expanding) {
       this.expanding = true;
       const z = zhercas.find((z) => z.order?.type === 'rite') || zhercas[0];
       this.building = true;
-      g.build(z, 'shrine', exposed.x, exposed.z).then((r) => { this.building = false; if (!r.ok) this.expanding = false; });
+      g.build(z, 'shrine', exposed.x, exposed.z).then((r) => { this.building = false; if (!r.ok) this.expanding = false; else this.site = r.building; });
       military.slice(0, 2).forEach((m) => g.order(m, { type: 'amove', x: exposed.x + 3, z: exposed.z - 3 }));
     }
 
-    // production
+    // production, capped so the clan grows with the match instead of swamping it early
+    const armyCap = Math.min(16, 4 + Math.floor(this.t / 60) * 1.2);
     for (const h of g.aliveB(R, 'warhall')) {
-      if (!h.built || h.queue.length >= 2) continue;
+      if (!h.built || h.queue.length >= 1 || military.length >= armyCap) continue;
       const roll = Math.random();
-      const ut = T.rain >= 50 && roll < 0.2 ? 'deer' : T.rain >= 25 && roll < 0.55 ? 'vitez' : 'streletz';
+      const ut = T.rain >= 50 && roll < 0.2 ? 'deer' : T.rain >= 25 && roll < 0.6 ? 'vitez' : 'streletz';
       g.train(h, ut);
     }
-    for (const h of g.aliveB(R, 'grove')) if (h.built && !h.queue.length && Math.random() < 0.5) g.train(h, 'bear');
+    for (const h of g.aliveB(R, 'grove')) if (h.built && !h.queue.length && military.length < armyCap && Math.random() < 0.5) g.train(h, 'bear');
 
     // defend: anything hit near home pulls the home army
     const home = LAYOUT.rivalGrod;
@@ -74,7 +77,7 @@ export class RivalAI {
     if (this.t >= this.nextWave) {
       const guard = 3;
       const avail = military.filter((m) => !m.wave).sort((a, b) => b.def.hp - a.def.hp);
-      const size = this.waveN === 0 ? 3 : Math.min(4 + this.waveN * 2, 14);
+      const size = this.waveN === 0 ? 3 : Math.min(3 + this.waveN * 2, 10);
       if (avail.length >= Math.min(size, 3) + (this.waveN === 0 ? 0 : guard)) {
         const team = avail.slice(0, Math.min(size, avail.length - (this.waveN === 0 ? 0 : guard)));
         const target = this.pickTarget();
@@ -112,7 +115,7 @@ export class RivalAI {
       if (g.canPlace(bt, x, z, R).ok) {
         const b = builders.find((u) => u.order?.type === 'dance') || builders[0];
         this.building = true;
-        g.build(b, bt, x, z).then(() => { this.building = false; });
+        g.build(b, bt, x, z).then((r) => { this.building = false; if (r.ok) this.site = r.building; });
         return true;
       }
     }

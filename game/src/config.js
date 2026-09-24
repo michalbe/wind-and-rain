@@ -25,7 +25,7 @@ export const INTERRUPT_S = 4;       // combat interrupts a ritual for this long
 export const UNITS = {
   vietra:   { name: 'Vietra',     title: 'Wind Priestess',  asset: 'vietra',    wind: 50,  rain: 0,  supply: 1, time: 12, hp: 60,   dmg: 3,  cd: 1.5, range: 1.4, speed: 3.4, sight: 12, kind: 'econ',  radius: 0.59, height: 3.04,  key: 'V' },
   zherca:   { name: 'Zherca',     title: 'Rain Priest',     asset: 'zherca',    wind: 50,  rain: 0,  supply: 1, time: 14, hp: 70,   dmg: 4,  cd: 1.5, range: 1.4, speed: 3.2, sight: 12, kind: 'econ',  radius: 0.59, height: 2.7, key: 'Z' },
-  streletz: { name: 'Streletz',   title: 'Archer',          asset: 'streletz',  wind: 50,  rain: 0,  supply: 1, time: 11, hp: 85,   dmg: 10, cd: 1.35, range: 13, speed: 3.6, sight: 16, kind: 'mil',   radius: 0.59, height: 2.83, key: 'S', ranged: true, vsBuilding: 0.5 },
+  streletz: { name: 'Streletz',   title: 'Archer',          asset: 'streletz',  wind: 50,  rain: 0,  supply: 1, time: 11, hp: 85,   dmg: 10, cd: 1.35, range: 13, speed: 3.6, sight: 16, kind: 'mil',   radius: 0.59, height: 2.83, key: 'S', ranged: true, vsBuilding: 0.35 },
   vitez:    { name: 'Vitez',      title: 'Heavy Warrior',   asset: 'vitez',     wind: 100, rain: 25, supply: 2, time: 18, hp: 280,  dmg: 21, cd: 1.6, range: 2.0, speed: 2.9, sight: 13, kind: 'mil',   radius: 0.85, height: 3.16, key: 'X' },
   deer:     { name: 'Deer Rider', title: 'Scout / Raider',  asset: 'deer_rider',wind: 50,  rain: 50, supply: 1, time: 16, hp: 140,  dmg: 12, cd: 1.1, range: 2.4, speed: 7.2, sight: 24, kind: 'mil',   radius: 1.17,  height: 5.44,  key: 'D', vsEcon: 2.2 },
   bear:     { name: 'Bear',       title: 'Heavy Beast',     asset: 'bear',      wind: 100, rain: 0,  supply: 2, time: 22, hp: 440,  dmg: 26, cd: 1.9, range: 2.6, speed: 2.5, sight: 13, kind: 'beast', radius: 1.43,  height: 2.46,  key: 'B', vsBuilding: 3 },
@@ -34,7 +34,7 @@ export const UNITS = {
 
 /** size = footprint in metres (square), used for the path grid and selection. */
 export const BUILDINGS = {
-  grod:   { name: 'Grod',         title: 'Settlement',      asset: 'grod',          wind: 300, rain: 0,  time: 45, hp: 1600, size: 11, height: 9,   sight: 18, trains: ['vietra', 'zherca'], key: 'G', builtBy: ['vietra'] },
+  grod:   { name: 'Grod',         title: 'Settlement',      asset: 'grod',          wind: 300, rain: 0,  time: 45, hp: 2200, size: 11, height: 9,   sight: 18, trains: ['vietra', 'zherca'], key: 'G', builtBy: ['vietra'] },
   khata:  { name: 'Khata',        title: '+8 Supply',       asset: 'khata',         wind: 100, rain: 0,  time: 20, hp: 420,  size: 5,  height: 5,   sight: 9,  trains: [], key: 'K', builtBy: ['vietra'], supply: 8 },
   warhall:{ name: 'War Hall',     title: 'Military',        asset: 'war_hall',      wind: 150, rain: 0,  time: 30, hp: 750,  size: 9,  height: 7,   sight: 12, trains: ['streletz', 'vitez', 'deer'], key: 'W', builtBy: ['vietra'] },
   shrine: { name: 'Rain Shrine',  title: 'Gathers Rain',    asset: 'rain_shrine',   wind: 75,  rain: 0,  time: 16, hp: 380,  size: 5,  height: 4.5, sight: 10, trains: [], key: 'R', builtBy: ['zherca'], atSpring: true },

@@ -69,6 +69,7 @@ export class Game {
       x = s.x; z = s.z;
     }
     const half = def.size / 2;
+    if (!def.atSpring && this.springs.some((s) => Math.abs(s.x - x) < half + 3.5 && Math.abs(s.z - z) < half + 3.5)) return { ok: false, why: 'The Sacred Springs are kept for Rain Shrines', x, z };
     if (!inMap(x - half, z - half) || !inMap(x + half, z + half)) return { ok: false, why: 'Too close to the edge', x, z };
     let hmin = 1e9, hmax = -1e9;
     for (const k of this.footprintCells(def, x, z)) {
@@ -458,7 +459,7 @@ export class Game {
       // auto-acquired targets are not chased forever
       if (o.auto && o.home && Math.hypot(u.x - o.home[0], u.z - o.home[1]) > 22 && u.team === TEAM.PLAYER) { this.order(u, { type: 'move', x: o.home[0], z: o.home[1] }); return; }
       const d = this.distTo(u, t);
-      if (d <= u.def.range) {
+      if (d <= u.def.range + (u.anim.mode === 'walk' ? 0 : 0.6)) {
         u.path = null; u.speedNow = 0;
         u.face = turn(u.face, Math.atan2(t.x - u.x, t.z - u.z), dt * 10);
         if (u.cooldown <= 0) {
@@ -522,9 +523,9 @@ export class Game {
       const b = o.site;
       if (!b || b.dead) { this.order(u, null); return; }
       if (b.built) { this.afterBuild(u, o, b); return; }
-      if (this.distTo(u, b) > 1.2) {
+      if (this.distTo(u, b) > 1.6) {
         u.anim.mode = 'walk';
-        if (!o.spot) { const h = b.def.size / 2 + 1.2; o.spot = [clamp(u.x, b.x - h, b.x + h), clamp(u.z, b.z - h, b.z + h)]; if (Math.abs(o.spot[0] - b.x) < h - 0.01 && Math.abs(o.spot[1] - b.z) < h - 0.01) o.spot[1] = b.z + h; }
+        if (!o.spot) { o.tries = (o.tries || 0) + 1; o.spot = this.freeAlong(b.x, b.z, Math.atan2(u.z - b.z, u.x - b.x) + (o.tries - 1) * 0.9, b.def.size / 2 + 0.6); }
         if (this.goTo(u, o.spot[0], o.spot[1], dt, 0.3)) o.spot = null;
         return;
       }
