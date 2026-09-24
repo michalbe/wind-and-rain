@@ -6,7 +6,7 @@ import { createRig } from '../rig.js';
 import { setSurfaceDefaults } from '../surfaces.js';
 import { preloadAssets } from '../assetlib.js';
 import { UNITS, BUILDINGS, TEAM, LAYOUT, MAP } from './config.js';
-import { buildTerrain, vegetation, buildStaticGrid, heightAt, applyFog, fogFactorAt } from './terrain.js';
+import { buildTerrain, vegetation, buildStaticGrid, heightAt, applyFog, fogFactorAt, wearGround } from './terrain.js';
 import { makeUnitModel, makeBuildingModel, makeProp, instanced, portrait } from './models.js';
 import { Game } from './game.js';
 import { RivalAI, setupMatch } from './ai.js';
@@ -24,7 +24,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPrefere
 renderer.setSize(innerWidth, innerHeight, false);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 2, 500);
-const rig = createRig(THREE, renderer, scene, { hour: 16.2, azimuth: 225, tier: 'auto', fogStart: 90, bloomStrength: 0.18, exposure: 0.66 });
+const rig = createRig(THREE, renderer, scene, { hour: 16.6, azimuth: 225, tier: 'auto', fogStart: 90, bloomStrength: 0.18, exposure: 0.74, fill: 1.7, bounceFlat: 5 });
 const phone = rig.tier.name === 'phone';
 setSurfaceDefaults({ size: phone ? 256 : 512 });
 
@@ -87,6 +87,9 @@ async function boot() {
   ui.treeDots = [...layout.pines, ...layout.birches].filter((_, i) => i % 2 === 0);
   ui.onResize = () => { renderer.setSize(innerWidth, innerHeight, false); rig.resize(innerWidth, innerHeight); };
   game.terrain = terrain;
+  const worn = (b) => wearGround(terrain, b.x, b.z, b.def.size * 0.95 + 3);
+  for (const b of game.buildings) worn(b);
+  game.on('placed', (b) => { worn(b); applyFog(terrain, game.vis, game.seen); });
   game.on('fog', () => fogVisuals());
   game.updateFog(); fogVisuals();
   ui.updateCamera(0);

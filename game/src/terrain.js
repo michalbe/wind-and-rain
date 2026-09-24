@@ -171,7 +171,7 @@ export function buildStaticGrid(veg) {
 /* ---------------------------------------------------------------- meshes */
 const C = (hex) => new THREE.Color(hex);
 const COL = {
-  meadow: C(0x6f8f34), grass: C(0x557a2c), forest: C(0x3f5226), dirt: C(0x8a6a42), mud: C(0x5a4a32),
+  meadow: C(0x5f7a34), grass: C(0x4e6a2c), forest: C(0x3a4a24), dirt: C(0x7a6440), mud: C(0x55462f), moss: C(0x465a26), ochre: C(0x7e7442), light: C(0x748a3c),
   rock: C(0x8e877a), clearing: C(0x5d8a4a), rim: C(0x5a6a3a), path: C(0xa08858),
 };
 export const baseColors = new Float32Array(VN * VN * 3);
@@ -189,6 +189,11 @@ export function buildTerrain(scene, tier) {
     // biome
     const n = fbm(x / 14, z / 14, 3);
     tmp.copy(COL.meadow).lerp(COL.grass, clamp(n * 1.6 - 0.5, 0, 1));
+    // big painted patches, 20-40 m across: dark moss, warm ochre, lighter meadow
+    const pa = fbm(x / 32 + 70, z / 32 - 30, 3), pb = fbm(x / 24 - 50, z / 24 + 11, 3);
+    tmp.lerp(COL.moss, clamp((pa - 0.55) * 3.5, 0, 0.7));
+    tmp.lerp(COL.ochre, clamp((pb - 0.6) * 3.5, 0, 0.55));
+    tmp.lerp(COL.light, clamp((0.38 - pa) * 3, 0, 0.45));
     const bd = Math.abs(bandD(x, z));
     if (bd < FOREST_HALF + 3) tmp.lerp(COL.forest, clamp((FOREST_HALF + 3 - bd) / 6, 0, 0.85));
     const slope = Math.abs(rawHeight(x + 1, z) - rawHeight(x - 1, z)) + Math.abs(rawHeight(x, z + 1) - rawHeight(x, z - 1));
@@ -198,7 +203,7 @@ export function buildTerrain(scene, tier) {
     for (const [px, pz, pr] of PONDS) { const d = Math.hypot(x - px, z - pz); if (d < pr + 4) tmp.lerp(COL.mud, clamp((pr + 4 - d) / 3, 0, 0.8)); }
     for (const g of [LAYOUT.playerGrod, LAYOUT.rivalGrod]) {
       const d = Math.hypot(x - g[0], z - g[1]);
-      if (d < 16) tmp.lerp(COL.dirt, clamp((16 - d) / 9, 0, 0.75) * (0.6 + 0.4 * fbm(x / 3, z / 3, 2)));
+      if (d < 20) tmp.lerp(COL.dirt, clamp((20 - d) / 9, 0, 0.8) * (0.55 + 0.45 * fbm(x / 3, z / 3, 2)));
     }
     const dc = Math.hypot(x - LAYOUT.clearing[0], z - LAYOUT.clearing[1]);
     if (dc < 12) tmp.lerp(COL.clearing, clamp((12 - dc) / 5, 0, 0.7));
@@ -232,6 +237,19 @@ export function buildTerrain(scene, tier) {
   water.name = 'water';
   scene.add(water);
   return { mesh, water };
+}
+
+/** trample the ground under and around a building: worn earth, painted into the base colours */
+export function wearGround(terrain, x, z, r) {
+  const p = terrain.mesh.geometry.attributes.position;
+  const dirt = COL.dirt;
+  for (let k = 0; k < p.count; k++) {
+    const vx = p.getX(k), vz = p.getZ(k);
+    const d = Math.hypot(vx - x, vz - z);
+    if (d > r) continue;
+    const t = clamp((r - d) / (r * 0.5), 0, 0.85) * (0.6 + 0.4 * fbm(vx / 2.5, vz / 2.5, 2));
+    for (let c = 0; c < 3; c++) baseColors[k * 3 + c] += ([dirt.r, dirt.g, dirt.b][c] * 0.92 - baseColors[k * 3 + c]) * t;
+  }
 }
 
 /**

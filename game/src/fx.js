@@ -79,12 +79,74 @@ function blobTexture() {
   const t = new THREE.CanvasTexture(c); return t;
 }
 
+/**
+ * Wind ribbons: three streaks spiralling up around each dancer, rebuilt every frame into one
+ * dynamic strip geometry (one draw call for every dancer on screen).
+ */
+class Ribbons {
+  constructor(scene, max = 40, per = 3, seg = 14) {
+    this.max = max; this.per = per; this.seg = seg;
+    const quads = max * per * (seg - 1);
+    this.pos = new Float32Array(quads * 4 * 3); this.alpha = new Float32Array(quads * 4);
+    const idx = new Uint32Array(quads * 6);
+    for (let q = 0; q < quads; q++) { const v = q * 4; idx.set([v, v + 1, v + 2, v + 2, v + 1, v + 3], q * 6); }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage));
+    g.setAttribute('aAlpha', new THREE.BufferAttribute(this.alpha, 1).setUsage(THREE.DynamicDrawUsage));
+    g.setIndex(new THREE.BufferAttribute(idx, 1));
+    this.mat = new THREE.ShaderMaterial({
+      vertexShader: 'attribute float aAlpha; varying float vA; void main(){ vA = aAlpha; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+      fragmentShader: 'varying float vA; void main(){ gl_FragColor = vec4(0.86, 0.96, 1.0, vA); }',
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    });
+    this.mesh = new THREE.Mesh(g, this.mat); this.mesh.frustumCulled = false; this.mesh.renderOrder = 6;
+    scene.add(this.mesh);
+    this.list = [];
+  }
+  add(x, y, z, t) { if (this.list.length < this.max) this.list.push([x, y, z, t]); }
+  flush() {
+    let q = 0;
+    const P = this.pos, A = this.alpha, S = this.seg;
+    for (const [x, y, z, t] of this.list) {
+      for (let k = 0; k < this.per; k++) {
+        const ph = t * 2.3 + k * 2.094;
+        const lift = ((t * 0.45 + k / this.per) % 1);            // each ribbon rises, fades, restarts
+        const fadeCycle = Math.sin(lift * Math.PI);
+        let px = 0, py = 0, pz = 0;
+        for (let s = 0; s < S; s++) {
+          const u = s / (S - 1);
+          const a = ph - u * 2.4;
+          const r = 1.05 + 0.35 * Math.sin(a * 1.7 + k) + u * 0.25;
+          const cx = x + Math.cos(a) * r, cz = z + Math.sin(a) * r, cy = y + 0.3 + lift * 2.6 - u * 1.1;
+          const w = 0.16 * (1 - u * 0.7);
+          if (s > 0) {
+            const v = q * 4;
+            P.set([px, py - w, pz, px, py + w, pz, cx, cy - w, cz, cx, cy + w, cz], v * 3);
+            const a0 = (1 - (u - 1 / (S - 1))) * 0.75 * fadeCycle, a1 = (1 - u) * 0.75 * fadeCycle;
+            A[v] = a0 * 0.3; A[v + 1] = a0; A[v + 2] = a1 * 0.3; A[v + 3] = a1;
+            q++;
+          }
+          px = cx; py = cy; pz = cz;
+        }
+      }
+    }
+    // collapse the unused tail
+    for (let i = q * 4; i < this.alpha.length; i++) this.alpha[i] = 0;
+    const g = this.mesh.geometry;
+    g.setDrawRange(0, q * 6);
+    g.attributes.position.needsUpdate = true; g.attributes.aAlpha.needsUpdate = true;
+    this.list.length = 0;
+  }
+}
+
 export class FX {
   constructor(scene, camera) {
     this.scene = scene; this.camera = camera;
     this.wind = new PointPool(scene, 900, true);
     this.dust = new PointPool(scene, 500, false);
-    this.glow = new PointPool(scene, 300, true);
+    this.glow = new PointPool(scene, 400, true);
+    this.ribbons = new Ribbons(scene);
+    this.clouds = new PointPool(scene, 160, false);
     // rain streaks
     this.rainN = 700;
     this.rainPos = new Float32Array(this.rainN * 6);
@@ -92,7 +154,8 @@ export class FX {
     this.rainLife = new Float32Array(this.rainN);
     this.rainI = 0;
     const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(this.rainPos, 3).setUsage(THREE.DynamicDrawUsage));
-    this.rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0x9fd4ff, transparent: true, opacity: 0.55, depthWrite: false }));
+    this.rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0xc8ecff, transparent: true, opacity: 0.85, depthWrite: false }));
+    this.rainX = new Float32Array(this.rainN * 3);
     this.rain.frustumCulled = false; scene.add(this.rain);
     // arrows
     const ag = new THREE.CylinderGeometry(0.025, 0.025, 0.9, 4); ag.rotateX(Math.PI / 2);
@@ -131,8 +194,9 @@ export class FX {
 
   /* per-frame emitters */
   windAround(x, y, z, t, strength = 1) {
-    // motes circling the dancer, spiralling upward
-    for (let k = 0; k < 3; k++) {
+    this.ribbons.add(x, y, z, t);
+    // and a few motes circling the dancer, spiralling upward
+    for (let k = 0; k < 1; k++) {
       const a = t * 3 + Math.random() * 6.28, r = 1.2 + Math.random() * 1.1;
       this.wind.emit(x + Math.cos(a) * r, y + 0.3 + Math.random() * 2.6, z + Math.sin(a) * r,
         -Math.sin(a) * 3.2 * strength, 0.5 + Math.random() * 0.6, Math.cos(a) * 3.2 * strength, 1.0 + Math.random() * 0.6, 0.42 + Math.random() * 0.3, 0.85, 0.95, 1.0, 0.7);
@@ -142,19 +206,23 @@ export class FX {
     for (let k = 0; k < rate * 2; k++) {
       const i = this.rainI; this.rainI = (this.rainI + 1) % this.rainN;
       const px = x + (Math.random() - 0.5) * 3.4, pz = z + (Math.random() - 0.5) * 3.4, py = y + 5 + Math.random() * 2.5;
-      this.rainPos.set([px, py, pz, px + 0.03, py - 0.45, pz], i * 6);
-      this.rainVel[i] = 9 + Math.random() * 3; this.rainLife[i] = (py - y) / this.rainVel[i];
+      this.rainPos.set([px, py, pz, px + 0.03, py - 0.8, pz], i * 6);
+      this.rainVel[i] = 11 + Math.random() * 3; this.rainLife[i] = (py - y - 0.3) / this.rainVel[i];
+      this.rainX.set([px, y + 0.25, pz], i * 3);
     }
-    if (Math.random() < 0.25 * rate) this.glow.emit(x + (Math.random() - 0.5) * 3, y + 5.5 + Math.random(), z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 0.3, 0, (Math.random() - 0.5) * 0.3, 2.2, 2.4, 0.42, 0.5, 0.6, 0.25);
+    // a small dark raincloud gathering over the shrine
+    if (Math.random() < 0.5) this.clouds.emit(x + (Math.random() - 0.5) * 3.6, y + 7.2 + Math.random() * 0.8, z + (Math.random() - 0.5) * 3.6, (Math.random() - 0.5) * 0.4, 0.05, (Math.random() - 0.5) * 0.4, 2.6, 3.2 + Math.random() * 1.6, 0.34, 0.38, 0.44, 0.75);
   }
   spiritAura(x, y, z) { if (Math.random() < 0.5) this.glow.emit(x + (Math.random() - 0.5) * 3, y + Math.random() * 4.5, z + (Math.random() - 0.5) * 3, 0, 0.4 + Math.random() * 0.4, 0, 2, 0.35, 0.62, 0.94, 0.78, 0.8); }
 
   update(dt, heightAt) {
     this.t += dt;
-    this.wind.update(dt); this.dust.update(dt); this.glow.update(dt);
+    this.wind.update(dt); this.dust.update(dt); this.glow.update(dt); this.clouds.update(dt);
+    this.ribbons.flush();
     for (let i = 0; i < this.rainN; i++) {
       if (this.rainLife[i] <= 0) { this.rainPos[i * 6 + 1] = -99; this.rainPos[i * 6 + 4] = -99; continue; }
       this.rainLife[i] -= dt; const dy = this.rainVel[i] * dt;
+      if (this.rainLife[i] <= 0 && Math.random() < 0.6) this.glow.emit(this.rainX[i * 3], this.rainX[i * 3 + 1], this.rainX[i * 3 + 2], (Math.random() - 0.5) * 0.8, 0.8, (Math.random() - 0.5) * 0.8, 0.35, 0.35, 0.7, 0.88, 1.0, 0.8, 5);
       this.rainPos[i * 6 + 1] -= dy; this.rainPos[i * 6 + 4] -= dy;
     }
     this.rain.geometry.attributes.position.needsUpdate = true;

@@ -97,6 +97,7 @@ export class Game {
     b.root.position.set(x, this.groundLevel(x, z, def.size), z);
     this.scene.add(b.root);
     this.buildings.push(b);
+    this.emit('placed', b);
     this.pending++;
     const model = await makeBuildingModel(def.asset, team);
     this.pending--;
