@@ -1,0 +1,16 @@
+{
+  "title": "Wind & Rain",
+  "slug": "wind-and-rain",
+  "team": ["YOUR_GITHUB_HANDLE"],
+  "play_url": "https://YOUR_GITHUB_HANDLE.github.io/wind-and-rain/game/",
+  "source_url": "https://github.com/YOUR_GITHUB_HANDLE/wind-and-rain",
+  "commit": "SHA_THE_VERDICT_NAMES",
+  "genre": "other",
+  "agent": "Claude Code",
+  "models": ["Claude Fable 5.1", "Claude Opus 5.5"],
+  "own_art": false,
+  "own_art_list": [],
+  "what_i_found": "An RTS whose economy is ritual, and whose economy is also the soundtrack: every dancing Vietra adds a layer (frame drum, ankle bells, clave, voice) to one synthesised settlement rhythm, and Zhercas at the springs add chant, water and distant thunder, so you hear your income and hear it falter when raiders interrupt a dance. Every unit is collapsed into one skinned draw call whose bones are the generated asset's own joints, which is what lets a sixty-unit army of code-built models run on a phone.",
+  "wallet": "later",
+  "contact": "YOUR_EMAIL_OR_X_HANDLE"
+}
